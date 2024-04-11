@@ -1,9 +1,17 @@
 #![no_main]
 #![no_std]
 
-mod vga;
 
-use core::panic::PanicInfo;
+#[macro_use]
+mod vga;
+mod bitarray;
+mod registers;
+mod gdt;
+
+use core::{arch::asm, panic::PanicInfo};
+use registers::CR0;
+
+use crate::bitarray::BitArray32;
 
 
 
@@ -14,9 +22,8 @@ fn panic(_info: &PanicInfo) -> ! {
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    println!("i");
-    println!("123");
     loop {}
+    
 }
     
 
