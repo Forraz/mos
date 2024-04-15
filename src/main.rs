@@ -8,10 +8,7 @@ mod bitarray;
 mod registers;
 mod gdt;
 
-use core::{arch::asm, panic::PanicInfo};
-use registers::CR0;
-
-use crate::bitarray::BitArray32;
+use core::{panic::PanicInfo};
 
 
 
@@ -22,6 +19,7 @@ fn panic(_info: &PanicInfo) -> ! {
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
+
     loop {}
     
 }
