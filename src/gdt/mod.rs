@@ -1,17 +1,30 @@
-use crate::bitarray::{BitArray32, BitArray64};
-
-
+use crate::{bitarray::{BitArray32, BitArray64}, panic};
 
 #[repr(C)]
 pub struct Descriptor {
     pub value: u64
 }
 
-impl Descriptor {
-    
+
+pub struct DescriptorManager {
+    descriptor: &'static mut Descriptor,
+    bitarray: BitArray64
+        
+}
+
+impl DescriptorManager {
+
+    pub fn set_value(&mut self) {
+        self.descriptor.value = self.bitarray.into_u64();
+    }
+
+    fn set_by_index(&mut self, index: u8, value: bool) {
+        self.bitarray.bits[index as usize] = value.into(); 
+        self.set_value();
+    }
+
     pub fn get_limit(&self) -> u32 {
-        let mut bitarray = BitArray64::from_u64(self.value);
-        let bits = &mut bitarray.bits;
+        let bits = &self.bitarray.bits;
         let mut limit_bitarray = BitArray32::from_u32(0);
 
         let first_part = &bits[63-15..];
@@ -29,8 +42,7 @@ impl Descriptor {
     }
 
     pub fn set_limit(&mut self, value: u32) {
-        let mut bitarray = BitArray64::from_u64(self.value);
-        let bits = &mut bitarray.bits;
+        let bits = &mut self.bitarray.bits;
         let limit_bitarray = BitArray32::from_u32(value);
 
         for i in 0..16 {
@@ -42,12 +54,11 @@ impl Descriptor {
 
         }
 
-        self.value = bitarray.into_u64();
+        self.set_value();
     }
 
     pub fn get_base(&self) -> u32 {
-       let mut bitarray = BitArray64::from_u64(self.value);
-       let bits = &mut bitarray.bits;
+       let bits = &self.bitarray.bits;
        let mut base_bitarray = BitArray32::from_u32(0);
         
        let first_part = &bits[63-31..63-15];
@@ -70,8 +81,7 @@ impl Descriptor {
     }
 
     pub fn set_base(&mut self, value: u32) {
-        let mut bitarray = BitArray64::from_u64(self.value);
-        let bits = &mut bitarray.bits;
+        let bits = &mut self.bitarray.bits;
         let limit_bitarray = BitArray32::from_u32(value);
 
         for i in 0..24 {
@@ -83,8 +93,74 @@ impl Descriptor {
 
         }
 
-        self.value = bitarray.into_u64();
+        self.set_value();
     }
+
+    pub fn get_g(&self) -> bool  {
+        self.bitarray.bits[8] != 0
+    }
+
+    pub fn set_g(&mut self, value: bool) {
+        self.set_by_index(8, value)
+    }
+
+    pub fn get_db(&self) -> bool {
+        self.bitarray.bits[9] != 0
+    }
+
+    pub fn set_db(&mut self, value: bool) {
+        self.set_by_index(9, value)
+    }
+
+    pub fn get_l(&self) -> bool {
+        self.bitarray.bits[10] != 0
+    }
+
+    pub fn set_l(&mut self, value: bool) {
+        self.set_by_index(10, value)
+    } 
+    
+    pub fn get_avl(&self) -> bool {
+        self.bitarray.bits[11] != 0
+    }
+
+    pub fn set_avl(&mut self, value: bool) {
+        self.set_by_index(11, value);
+    }
+
+    pub fn get_p(&self) -> bool {
+        self.bitarray.bits[15] != 0
+    }
+
+    pub fn set_p(&mut self, value: bool) {
+        self.set_by_index(15, value)
+    }
+
+    pub fn get_dpl(&self) -> u8 {
+        self.bitarray.bits[16] + self.bitarray.bits[17] * 2 
+    }
+
+    pub fn set_dpl(&mut self, value: u8) {
+        let bits = &mut self.bitarray.bits[0..2];
+        let val_array = BitArray32::from_u32(value.into());
+        for i in 0..2 {
+            bits[i] = val_array.bits[i]; 
+        }
+
+        self.set_value();
+    }
+
+    pub fn get_s(&self) -> bool {
+        self.bitarray.bits[18] != 0
+    }
+    
+    pub fn set_s(&mut self, value: bool) {
+        self.set_by_index(18, value)
+    }
+
+
 }
+
+
 
 
