@@ -1,4 +1,4 @@
-use crate::{bitarray::{BitArray32, BitArray64}, panic};
+use crate::bitarray::{BitArray32, BitArray64};
 
 #[repr(C)]
 pub struct Descriptor {
@@ -7,12 +7,23 @@ pub struct Descriptor {
 
 
 pub struct DescriptorManager {
+    pub index: u32,
     descriptor: &'static mut Descriptor,
     bitarray: BitArray64
-        
+    
+
 }
 
 impl DescriptorManager {
+
+    pub fn new(gdtr: u64, index: u32) -> Self {
+        let gdtr_base = gdtr as u32;
+        Self {
+            bitarray: BitArray64::from_u64(0),
+            index,
+            descriptor: unsafe { &mut *((gdtr_base + (index * 8)) as *mut Descriptor)}
+        }
+    }
 
     pub fn set_value(&mut self) {
         self.descriptor.value = self.bitarray.into_u64();
@@ -158,9 +169,67 @@ impl DescriptorManager {
         self.set_by_index(18, value)
     }
 
+    pub fn get_is_code(&self) -> bool { // executable bit
+        self.bitarray.bits[19] != 0
+    }
+
+    pub fn set_is_code(&mut self, value: bool) {
+        self.set_by_index(19, value);
+    }
+
+    pub fn get_e(&self) -> bool {
+        self.bitarray.bits[20] != 0 
+    }
+
+    pub fn set_e(&mut self, value: bool) {
+        self.set_by_index(20, value)
+    }
+
+    pub fn get_w(&self) -> bool {
+        self.bitarray.bits[21] != 0
+    }
+
+    pub fn set_w(&mut self, value: bool) {
+        self.set_by_index(21, value);
+    }
+
+    pub fn get_a(&self) -> bool {
+        self.bitarray.bits[22] != 0
+    }
+
+    pub fn set_a(&mut self, value: bool) {
+        self.set_by_index(22, value)
+    }
+
 
 }
 
+pub struct GDTManager {
+    gdtr: u64
+    
+}
+
+
+impl GDTManager {
+    
+    pub fn init() -> GDTManager {
+        let gdtr: u64 = 0;  
+        let gdt_manager = GDTManager { gdtr };
+        gdt_manager.gdt_init();
+        gdt_manager
+
+    }
+
+    pub fn gdt_init(&self) {
+        self.set_null_entry();
+    }
+
+    fn set_null_entry(&self) {
+        // let entry_manager = DescriptorManager::new(0);
+        
+    }
+
+}
 
 
 

@@ -8,8 +8,7 @@ mod bitarray;
 mod registers;
 mod gdt;
 
-use core::{panic::PanicInfo};
-use gdt::DescriptorManager;
+use core::panic::PanicInfo;
 
 
 
@@ -20,10 +19,6 @@ fn panic(_info: &PanicInfo) -> ! {
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    let value = true;
-    let val: u8 = value.into();
-
-    println!("{}", val);
     loop {}
     
 }
