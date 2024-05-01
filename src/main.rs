@@ -6,8 +6,10 @@ mod vga;
 mod bitarray;
 mod registers;
 mod gdt;
+mod init;
 
 use core::panic::PanicInfo;
+use init::init;
 
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
@@ -16,6 +18,7 @@ fn panic(_info: &PanicInfo) -> ! {
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
+    init();
     loop {}
     
 }

@@ -1,3 +1,4 @@
+use core::{arch::asm, hint::black_box, ptr::addr_of};
 
 const GDT_SIZE: usize = 6;
 
@@ -15,11 +16,8 @@ pub struct GDTManager {
 
 impl GDTManager {
     
-    pub fn init() -> GDTManager {
-        let gdt = [Descriptor {value: 0}; 6];
-        let mut gdt_manager = GDTManager { gdt, current_index: 0 };
-        gdt_manager.gdt_init();
-        gdt_manager
+    pub fn init(&mut self) {
+        self.gdt_init();
 
     }
 
@@ -247,5 +245,17 @@ impl GDTManager {
     }    
 }
 
+pub fn set_gdtr() {
+    pub static mut GDT: GDTManager = GDTManager { gdt: [Descriptor {value: 0}; 6], current_index: 0 };
+    unsafe { GDT.init() };
 
-
+    let gdtr_base = black_box(unsafe { addr_of!(GDT) } as u32);
+    let gdtr_limit = black_box(GDT_SIZE as u16);
+    
+    unsafe { 
+        asm!("mov [rsp], rax", in("rax") gdtr_limit);
+        asm!("mov [rsp+2], rax", in("rax") gdtr_base);
+        asm!("lgdt [rsp]");
+    }
+    
+}
