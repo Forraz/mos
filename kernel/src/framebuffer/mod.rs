@@ -1,6 +1,6 @@
 use core::fmt;
 
-use bootloader_api::info::FrameBuffer;
+use bootloader_api::info::{FrameBuffer, FrameBufferInfo};
 use noto_sans_mono_bitmap::{get_raster, FontWeight, RasterHeight, RasterizedChar};
 
 use super::utils::racy_cell::RacyCell;
@@ -20,30 +20,53 @@ struct Cursor {
 
 pub struct Writer {
     framebuffer: FrameBuffer,
+    info: FrameBufferInfo,
     cursor: Cursor
 }
 
 impl Writer {
     
     pub fn new(framebuffer: FrameBuffer) -> Self {
+        let info = framebuffer.info();
         Self {
             framebuffer,
             cursor: Cursor {
                 x_pos: BORDER_PADDING,
                 y_pos: BORDER_PADDING
-            }
+            },
+            info
         }
     }
 
     fn get_index(&self, x_pos: usize, y_pos: usize) -> usize {
         let info = self.framebuffer.info();
-        (x_pos + info.width * y_pos) * 4
+        (x_pos + info.width * y_pos) * info.bytes_per_pixel
+
+    }
+
+    fn scroll_buffer(&mut self) {
+        let buffer = self.framebuffer.buffer_mut();
+        let buffer_info = self.info;
+        let buffer_width = buffer_info.width;
+
+        for index in 0..buffer_info.byte_len {
+            if index < buffer_width {
+                continue;
+            }
+            buffer[index-buffer_width] = buffer[index]
+        }
+        self.cursor.y_pos -= FONT_SIZE.val() + FONT_VER_SPACING;
+        self.cursor.x_pos = BORDER_PADDING;
 
     }
 
     fn new_line(&mut self) {
         self.cursor.y_pos += FONT_SIZE.val() + FONT_VER_SPACING;
         self.cursor.x_pos = BORDER_PADDING;
+
+        if self.cursor.y_pos >= (self.info.height - (BORDER_PADDING * (FONT_SIZE.val() + FONT_VER_SPACING))) {
+            self.scroll_buffer();
+        }
     }
 
     pub fn clear(&mut self) {
@@ -54,7 +77,7 @@ impl Writer {
     
     fn move_cursor(&mut self, width: usize) {
         self.cursor.x_pos += width + FONT_HOR_SPACING;
-        if self.cursor.x_pos >= self.framebuffer.info().width {
+        if self.cursor.x_pos >= (self.framebuffer.info().width - BORDER_PADDING) {
             self.new_line();
         }
     }

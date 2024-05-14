@@ -1,12 +1,6 @@
 use core::arch::asm; 
-use crate::utils::bitarray::BitArray32;
-
-
  
-pub struct CR0 {
-    bits: [u8; 32]
-
-}
+pub struct CR0 {}
 
 impl CR0 {
 
@@ -20,118 +14,118 @@ impl CR0 {
         asm!("mov cr0, rax", in("rax") value)
     }
 
-    fn to_bits() -> BitArray32 {
-        BitArray32::from_u32(unsafe { Self::read_cr0() })
+    fn get_value() -> u32 {
+        unsafe { Self::read_cr0() }
+    }
+    
+    fn set_value(value: u32) {
+        unsafe { Self::write_cr0(value) }
+    }
+ 
+    pub fn get_bit(position: usize) -> bool {
+        ((Self::get_value() >> position) & 1) != 0
     }
 
-    fn write_from_bits(bits: BitArray32) {
-        unsafe { Self::write_cr0(bits.into_u32()) }
-    }
+    pub fn set_bit(position: usize, value: bool) {
+        let mask = (1u32) << position;
+        let new_value: u32;
 
-    fn get_by_index(index: u8) -> bool {
-        Self::to_bits().bits[index as usize] != 0
-    }
+        if value {
+            new_value = Self::get_value() | mask;
+        } else {
+            new_value = Self::get_value() & !mask;
+        }
 
-    fn set_by_index(index: u8, value: bool)  {
-        let bit = match value {
-            true => 1,
-            false => 0
-        };
-
-        let mut bitarray = Self::to_bits();
-        bitarray.bits[index as usize] = bit;
-
-        Self::write_from_bits(bitarray)
-    }
+        Self::set_value(new_value);
+    } 
 
     pub fn get_pe() -> bool {
-        Self::get_by_index(31)
+        Self::get_bit(0)
     }
 
     pub fn set_pe(value: bool) {
-        Self::set_by_index(31, value)
+        Self::set_bit(0, value)
     }
 
     pub fn get_mp() -> bool {
-        Self::get_by_index(31-1)
+        Self::get_bit(1)
     }
 
     pub fn set_mp(value: bool) {
-        Self::set_by_index(31-1, value)
+        Self::set_bit(1, value)
     }
 
     pub fn get_em() -> bool {
-        Self::get_by_index(31-2)
+        Self::get_bit(2)
     }
 
     pub fn set_em(value: bool) {
-        Self::set_by_index(31-2, value)
+        Self::set_bit(2, value)
     }
 
     pub fn get_ts() -> bool {
-        Self::get_by_index(31-3)
+        Self::get_bit(3)
     }
 
     pub fn set_ts(value: bool) {
-        Self::set_by_index(31-3, value)
+        Self::set_bit(3, value)
     }
 
     pub fn get_et() -> bool {
-        Self::get_by_index(31-4)
+        Self::get_bit(4)
     }
 
     pub fn set_et(value: bool) {
-        Self::set_by_index(31-4, value)
+        Self::set_bit(4, value)
     }
 
     pub fn get_ne() -> bool {
-        Self::get_by_index(31-5)
+        Self::get_bit(5)
     }
 
     pub fn set_ne(value: bool) {
-        Self::set_by_index(31-5, value)
+        Self::set_bit(5, value)
     }
 
     pub fn get_wp() -> bool {
-        Self::get_by_index(31-16)
+        Self::get_bit(16)
     }
 
     pub fn set_wp(value: bool) {
-        Self::set_by_index(31-16, value)
+        Self::set_bit(16, value)
     }
 
     pub fn get_am() -> bool {
-        Self::get_by_index(31-18)
+        Self::get_bit(18)
     }
 
     pub fn set_am(value: bool) {
-        Self::set_by_index(31-18, value)
+        Self::set_bit(18, value)
     }
 
     pub fn get_nw() -> bool {
-        Self::get_by_index(31-29)
+        Self::get_bit(29)
     }
 
     pub fn set_nw(value: bool) {
-        Self::set_by_index(31-29, value)
+        Self::set_bit(29, value)
     }
 
     pub fn get_cd() -> bool {
-        Self::get_by_index(31-30)
+        Self::get_bit(30)
     }
 
     pub fn set_cd(value: bool) {
-        Self::set_by_index(31-30, value)
+        Self::set_bit(30, value)
     }
 
     pub fn get_pg() -> bool {
-        Self::get_by_index(0)
+        Self::get_bit(31)
     }
 
     pub fn set_pg(value: bool) {
-        Self::set_by_index(0, value)
+        Self::set_bit(31, value)
     }
-
 
 
 }

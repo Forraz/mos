@@ -12,3 +12,8 @@
     rustup component add llvm-tools-preview
     ```
 
+* kernel target
+    ```
+    rustup target add x86_64-unknown-none
+    ```
+

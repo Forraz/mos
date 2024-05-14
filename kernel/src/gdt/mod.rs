@@ -13,7 +13,6 @@ pub struct GDTManager {
     current_index: usize
 }
 
-
 impl GDTManager {
     
     pub fn init(&mut self) {
@@ -42,7 +41,6 @@ impl GDTManager {
         self.set_is_code(false);
     }
  
-
     fn set_km_descriptor(&mut self) {
         self.set_default_descriptor();
         self.set_dpl(0);
