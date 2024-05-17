@@ -18,8 +18,11 @@ struct Cursor {
 }
 
 
+
+
 pub struct Writer {
     framebuffer: FrameBuffer,
+
     info: FrameBufferInfo,
     cursor: Cursor
 }
@@ -32,41 +35,60 @@ impl Writer {
             framebuffer,
             cursor: Cursor {
                 x_pos: BORDER_PADDING,
-                y_pos: BORDER_PADDING
+                y_pos: 0
             },
             info
         }
     }
 
-    fn get_index(&self, x_pos: usize, y_pos: usize) -> usize {
-        let info = self.framebuffer.info();
+    fn get_index(info: FrameBufferInfo, x_pos: usize, y_pos: usize) -> usize {
         (x_pos + info.width * y_pos) * info.bytes_per_pixel
 
     }
 
     fn scroll_buffer(&mut self) {
-        let buffer = self.framebuffer.buffer_mut();
-        let buffer_info = self.info;
-        let buffer_width = buffer_info.width;
+        let framebuffer = self.framebuffer.buffer_mut();
+        // const buffer_info: FrameBufferInfo = self.framebuffer.info(); 
 
-        for index in 0..buffer_info.byte_len {
-            if index < buffer_width {
-                continue;
+        buffer[0] = 255;
+        buffer[1] = 255;
+        buffer[2] = 255;
+        buffer[3] = 255;
+
+        for y in (BORDER_PADDING + 1)..buffer_info.height {
+            for x in (BORDER_PADDING)..buffer_width {
+                let index = Self::get_index(buffer_info, x, y);
+                let prev_index = Self::get_index(buffer_info, x, y-1);
+                for i in 0..4 {
+                    buffer[prev_index+i] = buffer[index+i];
+                }
             }
-            buffer[index-buffer_width] = buffer[index]
+        }        
+
+
+        for x in BORDER_PADDING..buffer_width {
+            let index = Self::get_index(buffer_info, x, self.cursor.y_pos-1); 
+            for i in 0..4 {
+                buffer[index+i] = 0;
+            }
         }
-        self.cursor.y_pos -= FONT_SIZE.val() + FONT_VER_SPACING;
+        
+        self.cursor.y_pos -= (FONT_SIZE.val() + FONT_VER_SPACING) * 10;
         self.cursor.x_pos = BORDER_PADDING;
+
+        
 
     }
 
     fn new_line(&mut self) {
+
         self.cursor.y_pos += FONT_SIZE.val() + FONT_VER_SPACING;
         self.cursor.x_pos = BORDER_PADDING;
 
-        if self.cursor.y_pos >= (self.info.height - (BORDER_PADDING * (FONT_SIZE.val() + FONT_VER_SPACING))) {
+       
+        if self.cursor.y_pos >= self.info.height {
             self.scroll_buffer();
-        }
+        } 
     }
 
     pub fn clear(&mut self) {
@@ -77,13 +99,13 @@ impl Writer {
     
     fn move_cursor(&mut self, width: usize) {
         self.cursor.x_pos += width + FONT_HOR_SPACING;
-        if self.cursor.x_pos >= (self.framebuffer.info().width - BORDER_PADDING) {
+        if self.cursor.x_pos >= (self.framebuffer.info().width - BORDER_PADDING * 2) {
             self.new_line();
         }
     }
 
     fn write_pixel(&mut self, pixel: u32, x_pos: usize, y_pos: usize) {
-        let index = self.get_index(x_pos, y_pos);
+        let index = Self::get_index(self.info, x_pos, y_pos);
         for i in 0..3 {
             self.framebuffer.buffer_mut()[index+i] = (pixel >> (8*i) & (u8::max_value() as u32)) as u8;
         }

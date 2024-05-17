@@ -8,6 +8,7 @@ pub mod init;
 pub mod utils;
 
 use bootloader_api::{entry_point, BootInfo, BootloaderConfig};
+use noto_sans_mono_bitmap::{FontWeight, RasterHeight};
 
 use core::panic::PanicInfo;
 use init::init;
@@ -26,7 +27,15 @@ const CONFIG: BootloaderConfig = {
 
 fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     init(boot_info.framebuffer.take().unwrap());    
+       
+    
+    // println!("{}", RasterHeight::Size20.val());
 
+    for i in 0..100000 {
+        println!("{}", i);
+
+    }
+    
     loop {}
 }
 
