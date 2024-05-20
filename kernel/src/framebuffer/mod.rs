@@ -1,4 +1,4 @@
-use core::fmt;
+use core::{fmt, mem::copy};
 
 use bootloader_api::info::{FrameBuffer, FrameBufferInfo};
 use noto_sans_mono_bitmap::{get_raster, FontWeight, RasterHeight, RasterizedChar};
@@ -32,7 +32,7 @@ impl Writer {
             framebuffer,
             cursor: Cursor {
                 x_pos: BORDER_PADDING,
-                y_pos: BORDER_PADDING
+                y_pos: 0
             },
             info
         }
@@ -45,28 +45,32 @@ impl Writer {
     }
 
     fn scroll_buffer(&mut self) {
-        let buffer = self.framebuffer.buffer_mut();
-        let buffer_info = self.info;
-        let buffer_width = buffer_info.width;
+        // fn set_white_pixel(arr: &mut [u8], i: usize) {
+        //     for index in 0..4 {
+        //         arr[i+(index as usize)] = 255;
+        //     }    
+        // }
 
-        for index in 0..buffer_info.byte_len {
-            if index < buffer_width {
-                continue;
-            }
-            buffer[index-buffer_width] = buffer[index]
+        self.framebuffer.buffer_mut().copy_within(self.info.width*4.., 0);        
+        for i in 1..self.info.width*4*FONT_SIZE.val() {
+            self.framebuffer.buffer_mut()[self.info.byte_len-i] = 0;
         }
-        self.cursor.y_pos -= FONT_SIZE.val() + FONT_VER_SPACING;
+    
+        self.cursor.y_pos = self.info.height - 20;
         self.cursor.x_pos = BORDER_PADDING;
 
     }
 
-    fn new_line(&mut self) {
+    fn new_line(&mut self) { 
+
         self.cursor.y_pos += FONT_SIZE.val() + FONT_VER_SPACING;
         self.cursor.x_pos = BORDER_PADDING;
 
-        if self.cursor.y_pos >= (self.info.height - (BORDER_PADDING * (FONT_SIZE.val() + FONT_VER_SPACING))) {
+        if self.cursor.y_pos >= (self.info.height - 20) {
             self.scroll_buffer();
         }
+
+        
     }
 
     pub fn clear(&mut self) {
