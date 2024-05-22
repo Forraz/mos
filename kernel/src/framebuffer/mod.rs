@@ -1,4 +1,4 @@
-use core::{fmt, mem::copy};
+use core::fmt;
 
 use bootloader_api::info::{FrameBuffer, FrameBufferInfo};
 use noto_sans_mono_bitmap::{get_raster, FontWeight, RasterHeight, RasterizedChar};
@@ -45,18 +45,13 @@ impl Writer {
     }
 
     fn scroll_buffer(&mut self) {
-        // fn set_white_pixel(arr: &mut [u8], i: usize) {
-        //     for index in 0..4 {
-        //         arr[i+(index as usize)] = 255;
-        //     }    
-        // }
+        let buffer = self.framebuffer.buffer_mut();
+        let row_size = self.info.width * FONT_SIZE.val() * 4;
 
-        self.framebuffer.buffer_mut().copy_within(self.info.width*4.., 0);        
-        for i in 1..self.info.width*4*FONT_SIZE.val() {
-            self.framebuffer.buffer_mut()[self.info.byte_len-i] = 0;
-        }
+        buffer.copy_within(row_size.., 0); 
+        buffer[self.info.byte_len-row_size..].fill(0);
     
-        self.cursor.y_pos = self.info.height - 20;
+        self.cursor.y_pos -= FONT_SIZE.val();
         self.cursor.x_pos = BORDER_PADDING;
 
     }
@@ -66,10 +61,9 @@ impl Writer {
         self.cursor.y_pos += FONT_SIZE.val() + FONT_VER_SPACING;
         self.cursor.x_pos = BORDER_PADDING;
 
-        if self.cursor.y_pos >= (self.info.height - 20) {
+        if self.cursor.y_pos >= (self.info.height - FONT_SIZE.val()) {
             self.scroll_buffer();
         }
-
         
     }
 

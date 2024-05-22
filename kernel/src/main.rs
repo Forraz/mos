@@ -29,7 +29,7 @@ const CONFIG: BootloaderConfig = {
 fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     init(boot_info.framebuffer.take().unwrap());    
         
-    for i in 0..10000 {
+    for i in 0..u32::max_value() {
         println!("{}", i);
     }
 
