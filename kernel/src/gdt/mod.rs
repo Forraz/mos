@@ -2,6 +2,12 @@ use core::{arch::asm, hint::black_box, ptr::addr_of};
 
 const GDT_SIZE: usize = 6;
 
+pub enum ProcessorMode {
+    LongMode,
+    ProtectedMode
+}
+
+
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct Descriptor {
@@ -10,7 +16,8 @@ pub struct Descriptor {
 
 pub struct GDTManager {
     pub gdt: [Descriptor; GDT_SIZE],
-    current_index: usize
+    current_index: usize,
+    mode: ProcessorMode
 }
 
 impl GDTManager {
@@ -42,7 +49,7 @@ impl GDTManager {
     }
  
     fn set_km_descriptor(&mut self) {
-        self.set_default_descriptor();
+        self.set_descriptor();
         self.set_dpl(0);
     }
 
@@ -59,20 +66,37 @@ impl GDTManager {
     }
 
     fn set_um_descriptor(&mut self) {
-        self.set_default_descriptor();
+        self.set_descriptor();
         self.set_dpl(3);
     }
 
     fn set_tss_descriptor(&mut self) { // Task State Segment setter (Flat mode)
         self.set_current_index(5)
     }
+    
+    fn set_descriptor(&mut self) {
+        match self.mode {
+            ProcessorMode::LongMode => self.set_lmode_descriptor(),
+            ProcessorMode::ProtectedMode => self.set_pmode_descriptor()
+        }
+    }
+
+    fn set_lmode_descriptor(&mut self) {
+        self.set_default_descriptor();
+        self.set_db(false);
+        self.set_l(true);
+    }
+
+    fn set_pmode_descriptor(&mut self) {
+        self.set_default_descriptor();
+        self.set_db(true);
+        self.set_l(false);
+    }
 
     fn set_default_descriptor(&mut self) {
         self.set_base(0);
         self.set_limit(0xFFFFF);
         self.set_g(true);
-        self.set_db(true);
-        self.set_l(false);
         self.set_avl(false);
         self.set_p(true);
         self.set_s(true);
@@ -243,7 +267,7 @@ impl GDTManager {
     }    
 }
 
-pub fn set_gdtr() {
+pub fn set_gdt() {
     pub static mut GDT: GDTManager = GDTManager { gdt: [Descriptor {value: 0}; 6], current_index: 0 };
     unsafe { GDT.init() };
 
